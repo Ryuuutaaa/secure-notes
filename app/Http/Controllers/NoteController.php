@@ -8,9 +8,10 @@ use Illuminate\Support\Facades\Auth;
 
 class NoteController extends Controller
 {
+    // VULNERABLE: Tampilkan SEMUA catatan (bukan hanya milik user)
     public function index()
     {
-        $notes = Note::where('user_id', Auth::id())->latest()->get();
+        $notes = Note::with('user')->latest()->get(); // BAHAYA: Semua note
         return view('notes.index', compact('notes'));
     }
 
@@ -22,43 +23,47 @@ class NoteController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'body'  => ['nullable', 'string'],
+            'title' => 'required|string|max:255',
+            'body' => 'nullable|string',
         ]);
 
         $data['user_id'] = Auth::id();
-        Note::create($data);
+        $note = Note::create($data);
 
-        return redirect()->route('notes.index');
+        return redirect()->route('notes.show', $note)
+            ->with('success', 'Catatan berhasil dibuat!');
     }
 
+    // VULNERABLE: Tidak ada pengecekan kepemilikan
     public function show(Note $note)
     {
-        abort_unless($note->user_id === Auth::id(), 403);
         return view('notes.show', compact('note'));
     }
 
+    // VULNERABLE: Tidak ada pengecekan kepemilikan  
     public function edit(Note $note)
     {
-        abort_unless($note->user_id === Auth::id(), 403);
         return view('notes.edit', compact('note'));
     }
 
+    // VULNERABLE: Tidak ada pengecekan kepemilikan
     public function update(Request $request, Note $note)
     {
-        abort_unless($note->user_id === Auth::id(), 403);
         $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'body'  => ['nullable', 'string'],
+            'title' => 'required|string|max:255',
+            'body' => 'nullable|string',
         ]);
+
         $note->update($data);
-        return redirect()->route('notes.show', $note);
+        return redirect()->route('notes.show', $note)
+            ->with('success', 'Catatan berhasil diupdate!');
     }
 
+    // VULNERABLE: Tidak ada pengecekan kepemilikan
     public function destroy(Note $note)
     {
-        abort_unless($note->user_id === Auth::id(), 403);
         $note->delete();
-        return redirect()->route('notes.index');
+        return redirect()->route('notes.index')
+            ->with('success', 'Catatan berhasil dihapus!');
     }
 }
