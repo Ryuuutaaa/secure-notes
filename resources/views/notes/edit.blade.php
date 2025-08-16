@@ -2,8 +2,9 @@
     <x-slot name="header">
         <h2>Edit Note</h2>
     </x-slot>
-    <form method="POST" action="{{ route('notes.update', $note) }}">
-        @csrf @method('PUT')
+    <form method="POST" action="{{ route('notes.update', $note) }}" class="space-y-6">
+        @csrf
+        @method('PUT')
         <label>Title</label>
         <input type="text" name="title" value="{{ $note->title }}" required>
         <label>Body</label>
