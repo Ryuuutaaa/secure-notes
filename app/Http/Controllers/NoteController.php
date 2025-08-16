@@ -10,7 +10,7 @@ class NoteController extends Controller
 {
     public function index()
     {
-        $notes = Note::where('user_id', Auth::id())->latest()->get();
+        $notes = Note::latest()->get(); // VULN: bukan milik user saja
         return view('notes.index', compact('notes'));
     }
 
