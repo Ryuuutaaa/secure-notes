@@ -45,7 +45,6 @@ class NoteController extends Controller
 
     public function show(Note $note)
     {
-        // ⬇⬇⬇ INI YANG KAMU TANYAKAN: panggil authorize di controller ini
         $this->authorize('view', $note);
         return view('notes.show', compact('note'));
     }
