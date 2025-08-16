@@ -8,56 +8,71 @@ use Illuminate\Support\Facades\Auth;
 
 class NoteController extends Controller
 {
+    // Opsional: jika mau otomatis authorize semua method resource,
+    // aktifkan baris ini lalu hapus pemanggilan $this->authorize(...) di tiap method.
+    // public function __construct()
+    // {
+    //     $this->authorizeResource(Note::class, 'note'); // 'note' harus sama dengan nama parameter Route Model Binding
+    // }
+
     public function index()
     {
+        // Data hanya milik user yang login (mencegah bocor di daftar)
         $notes = Note::where('user_id', Auth::id())->latest()->get();
         return view('notes.index', compact('notes'));
     }
 
     public function create()
     {
+        // Opsional: $this->authorize('create', Note::class);
         return view('notes.create');
     }
 
     public function store(Request $request)
     {
+        // Opsional: $this->authorize('create', Note::class);
+
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'body'  => ['nullable', 'string'],
         ]);
 
         $data['user_id'] = Auth::id();
-        Note::create($data);
+        $note = Note::create($data);
 
-        return redirect()->route('notes.index');
+        return redirect()->route('notes.show', $note);
     }
 
     public function show(Note $note)
     {
-        abort_unless($note->user_id === Auth::id(), 403);
+        // ⬇⬇⬇ INI YANG KAMU TANYAKAN: panggil authorize di controller ini
+        $this->authorize('view', $note);
         return view('notes.show', compact('note'));
     }
 
     public function edit(Note $note)
     {
-        abort_unless($note->user_id === Auth::id(), 403);
+        $this->authorize('update', $note);
         return view('notes.edit', compact('note'));
     }
 
     public function update(Request $request, Note $note)
     {
-        abort_unless($note->user_id === Auth::id(), 403);
+        $this->authorize('update', $note);
+
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'body'  => ['nullable', 'string'],
         ]);
+
         $note->update($data);
         return redirect()->route('notes.show', $note);
     }
 
     public function destroy(Note $note)
     {
-        abort_unless($note->user_id === Auth::id(), 403);
+        $this->authorize('delete', $note);
+
         $note->delete();
         return redirect()->route('notes.index');
     }
